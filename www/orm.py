@@ -92,8 +92,9 @@ class Field(object):
 
 class StringField(Field):
     
-    def __init__(self, name=None, primary_key=False, default=None):
-        super().__init__(name, 'varchar(100)', primary_key, default)
+    # 因为字符串的长度不确定性高， 所以使用ddl参数动态设定
+    def __init__(self, name=None, primary_key=False, default=None, ddl='varchar(100)'):
+        super().__init__(name, ddl, primary_key, default)
 
 class BooleanField(Field):
 
