@@ -18,10 +18,8 @@ async def create_pool(loop, **kw):
         user=kw['user'],
         password=kw['password'],
         db=kw['db'],
-        charset=kw.get('charset', 'utf-8'),
         autocommit=kw.get('autocommit', True),  # 自动提交事务
         maxsize=kw.get('maxsize', 10),
-        minisize=kw.get('minisize', 1),
         loop=loop
     )
 
@@ -171,8 +169,9 @@ class ModelMetaclass(type):
         escaped_fields = list(map(lambda f: '`%s`' % f, fields))
         attrs['__mappings__'] = mappings    # 保存属性和列的映射关系
         attrs['__table__'] = tableName
-        attrs['__primaty_key__'] = primaryKey  # 主键属性名
-        
+        attrs['__primary_key__'] = primaryKey # 主键属性名
+        attrs['__fields__'] = fields  # 除主键外的属性名
+
         # 构造默认的SELECT, INSERT, UPDATE和DELETE语句
         attrs['__select__'] = 'select `%s`, %s from `%s`' % (primaryKey, ','.join(escaped_fields), tableName)
         attrs['__insert__'] = 'insert into `%s` (%s, `%s`) values (%s)' % (tableName, ','.join(escaped_fields), primaryKey, create_args_string(len(escaped_fields) + 1))
@@ -207,7 +206,7 @@ class Model(dict, metaclass=ModelMetaclass):
         if value is None:
             field = self.__mappings__[key]      # __mappings__是在元类ModelMetaclass中定义的，存储的是id = IntegerField(primary_key=True)等对应的类型值，其default值在对应的IntegerField中定义
             if field.default is not None:
-                value = field.default if callable(field.default) else field.default
+                value = field.default
                 logging.debug('using default value for %s: %s' % (key, str(value)))
                 setattr(self, key, value)
         return value
@@ -276,7 +275,7 @@ class Model(dict, metaclass=ModelMetaclass):
     async def save(self):
         args = list(map(self.getValueOrDefault, self.__fields__))
         args.append(self.getValueOrDefault(self.__primary_key__))
-        rows = await execute(self.__insert, args)
+        rows = await execute(self.__insert__, args)
         if rows != 1:
             logging.warning('failed to insert record: affected rows: %s' % rows)
 
