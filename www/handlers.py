@@ -3,7 +3,7 @@
 
 import time, re, hashlib, json, logging
 
-from apis import APIValueError, APIError
+from apis import APIValueError, APIError, APIPermissionError, APIResourceNotFoundError
 
 from aiohttp import web
 
@@ -44,6 +44,15 @@ def signin(request):
         '__template__': 'signin.html'
     }
 
+@get('/blog_edit')
+def blogedit(request):
+    return {
+        '__template__': 'blog_edit.html',
+        'id': '',
+        'action': '/api/blogs',
+        '__user__': request.__user__
+    }
+
 
 # 计算加密cookie   "用户id" + "过期时间" + SHA1("用户id" + "用户口令" + "过期时间" + "SecretKey")
 def user2cookie(user, max_age):
@@ -81,6 +90,12 @@ async def cookie2user(cookie_str):
     except Exception as e:
         logging.exception(e)
         return None   
+
+def check_admin(request):
+    print(request.__user__)
+    if request.__user__ is None:
+        raise APIPermissionError()
+
 
 # 登出
 @get('/signout')
@@ -152,3 +167,21 @@ async def api_register_user(*, email, name, password):
     r.content_type = 'application/json'
     r.body = json.dumps(user, ensure_ascii=False).encode('utf-8')
     return r
+
+@get('/api/blogs/{id}')
+async def api_get_blog(*, id):
+    blog = await Blog.find(id)
+    return blog
+
+@post('/api/blogs')
+async def api_create_blog(request, *, name, summary, content):
+    check_admin(request)
+    if not name or not name.strip():
+        raise APIValueError('name', 'name cannot be empty.')
+    if not summary or not summary.strip():
+        raise APIValueError('summary', 'summary cannot be empty.')
+    if not content or not content.strip():
+        raise APIValueError('content', 'content cannot be empty.')
+    blog = Blog(user_id=request.__user__.id, user_name=request.__user__.name, user_image=request.__user__.image, name=name.strip(), summary=summary.strip(), content=content.strip())
+    await blog.save()
+    return blog
