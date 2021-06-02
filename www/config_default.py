@@ -8,5 +8,8 @@ configs = {
         'user': 'lee',
         'password': 'lee',
         'database': 'python_webapp'
+    },
+    'session': {
+        'secret': 'python_webapp'
     }
 }

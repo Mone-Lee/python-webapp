@@ -10,7 +10,7 @@ class Dict(dict):
     使配置支持使用.访问属性，例: x.y
     '''
     def __init__(self, names=(), values=(), **kw):
-        super.__init__(**kw)
+        super().__init__(**kw)
         # zip()生成一个数组list，每一项是一个tuple, tuple中是zip每一项参数对应的第i项, list长度为zip参数的最短一项的长度
         # 例： zip('abcd', [1, 2])  => [('a', 1), ('b', 2)]
         for k, v in zip(names, values):
