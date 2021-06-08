@@ -4,7 +4,8 @@ python学习实践项目，极简博客
 #### 环境配置
 1. 异步框架 `aiohttp`
 2. 前端模板引擎 `jinja2`
-3. MySQL的Python异步驱动程序 `aiomysql`
+3. MySQL的Python异步驱动程序 `aiomysql`  
+4. 接收文件内容变化的通知，如果是.py文件，就自动重启wsgiapp.py进程 `watchdog`
 
 
 #### 项目结构说明
