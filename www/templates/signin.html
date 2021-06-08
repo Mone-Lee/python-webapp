@@ -12,32 +12,32 @@
     <script src="/static/js/awesome.js"></script>
     <script>
 
-$(function() {
-    var vmAuth = new Vue({
-        el: '#vm',
-        data: {
-            email: '',
-            password: ''
-        },
-        methods: {
-            submit: function(event) {
-                event.preventDefault();
-                var
-                    $form = $('#vm'),
-                    email = this.email.trim().toLowerCase(),
-                    data = {
-                        email: email,
-                        password: this.password==='' ? '' : CryptoJS.SHA1(email + ':' + this.password).toString()
-                    };
-                $form.postJSON('/api/authenticate', data, function(err, result) {
-                    if (! err) {
-                        location.assign('/');
+        $(function() {
+            var vmAuth = new Vue({
+                el: '#vm',
+                data: {
+                    email: '',
+                    password: ''
+                },
+                methods: {
+                    submit: function(event) {
+                        event.preventDefault();
+                        var
+                            $form = $('#vm'),
+                            email = this.email.trim().toLowerCase(),
+                            data = {
+                                email: email,
+                                password: this.password==='' ? '' : CryptoJS.SHA1(email + ':' + this.password).toString()
+                            };
+                        $form.postJSON('/api/authenticate', data, function(err, result) {
+                            if (! err) {
+                                location.assign('/');
+                            }
+                        });
                     }
-                });
-            }
-        }
-    });
-});
+                }
+            });
+        });
 
     </script>
 </head>

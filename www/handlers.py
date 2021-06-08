@@ -3,9 +3,10 @@
 
 import time, re, hashlib, json, logging
 
-from apis import APIValueError, APIError, APIPermissionError, APIResourceNotFoundError
+from apis import Page, APIValueError, APIError, APIPermissionError, APIResourceNotFoundError
 
 from aiohttp import web
+from urllib import parse
 
 from coroweb import get, post
 
@@ -44,12 +45,25 @@ def signin(request):
         '__template__': 'signin.html'
     }
 
+# 创建日志
 @get('/blog_edit')
 def blogedit(request):
+    id = ''
+    if request.query_string and parse.parse_qs(request.query_string, True)['id']:
+        id = parse.parse_qs(request.query_string, True)['id'][0]
     return {
         '__template__': 'blog_edit.html',
-        'id': '',
+        'id': id,
         'action': '/api/blogs',
+        '__user__': request.__user__
+    }
+
+# 日志列表页
+@get('/manage/blogs')
+def manage_blogs(request, *, page='1'):
+    return {
+        '__template__': 'manage_blogs.html',
+        'page_index': get_page_index(page),
         '__user__': request.__user__
     }
 
@@ -96,6 +110,15 @@ def check_admin(request):
     if request.__user__ is None:
         raise APIPermissionError()
 
+def get_page_index(page_str):
+    p = 1
+    try:
+        p = int(page_str)
+    except ValueError as e:
+        pass
+    if p < 1:
+        p = 1
+    return p
 
 # 登出
 @get('/signout')
@@ -168,11 +191,25 @@ async def api_register_user(*, email, name, password):
     r.body = json.dumps(user, ensure_ascii=False).encode('utf-8')
     return r
 
+# 分页获取日志列表信息
+@get('/api/blogs')
+async def api_blogs(*, page='1'):
+    page_index = get_page_index(page)
+    num = await Blog.findNumber('count(id)')
+    p = Page(num, page_index)
+    if num == 0:
+        return dict(page=p, blogs=())
+    blogs = await Blog.findAll(prderBy='created_at desc', limit=(p.offset, p.limit))
+    return dict(page=p, blogs=blogs)
+
+
+# 获取某个日志的信息
 @get('/api/blogs/{id}')
 async def api_get_blog(*, id):
     blog = await Blog.find(id)
     return blog
 
+# 创建日志
 @post('/api/blogs')
 async def api_create_blog(request, *, name, summary, content):
     check_admin(request)
